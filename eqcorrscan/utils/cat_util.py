@@ -274,6 +274,12 @@ def refine_picks(catalog, stream_dict, pre_pick, post_pick, shift_len,
     master_stream = stream_dict[master_id]
 
     new_catalog = obspy.Catalog()
+    # Figure total number of picks
+    tot_pks = 0
+    for event in catalog:
+        for cnt_pick in event:
+            tot_pks += 1
+    refined_num = 0
     # Now loop the master through all events in catalog
     for slave_event in catalog:
         # Copy old slave event and reset the picks (keep the rest of the info)
@@ -306,7 +312,6 @@ def refine_picks(catalog, stream_dict, pre_pick, post_pick, shift_len,
                       pick.waveform_id.channel_code)
                 break
             for slave_pick in slave_matches:
-                print('For pick on: %s' % slave_pick.waveform_id)
                 if slave_stream.select(station=slave_pick.waveform_id.
                                        station_code,
                                        channel='*'+slave_pick.waveform_id.
@@ -345,6 +350,7 @@ def refine_picks(catalog, stream_dict, pre_pick, post_pick, shift_len,
                         new_pick.creation_info.author = 'eqcorrscan.refine_picks()'
                         new_pick.creation_info.creation_time = obspy.UTCDateTime.now()
                         new_event.picks.append(new_pick)
+                        refined_num += 1
                     else:
                         # new_event.picks.append(slave_pick)
                         print('Correlation not good enough to correct pick')
@@ -356,4 +362,5 @@ def refine_picks(catalog, stream_dict, pre_pick, post_pick, shift_len,
                     new_event.picks.append(slave_pick)
                     continue
         new_catalog += new_event
+    print('Refined %d of %d picks' % (refined_num, tot_pks))
     return new_catalog
