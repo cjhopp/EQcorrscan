@@ -146,6 +146,7 @@ def cluster(template_list, show=True, corr_thresh=0.3, save_corrmat=False,
     from scipy.spatial.distance import squareform
     from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
     import matplotlib.pyplot as plt
+    import seaborn as sns
     from multiprocessing import cpu_count
     if cores == 'all':
         num_cores = cpu_count()
@@ -168,7 +169,10 @@ def cluster(template_list, show=True, corr_thresh=0.3, save_corrmat=False,
     Z = linkage(dist_vec)
     if show:
         if debug >= 1:
-            print('Plotting the dendrogram')
+            print('Plotting the matrix, then dendrogram')
+        cmap = sns.diverging_palette(220, 20, as_cmap=True)
+        sns.clustermap(dist_mat, cmap=cmap)
+        plt.show()
         dendrogram(Z, color_threshold=1 - corr_thresh,
                    distance_sort='ascending')
         plt.show()
@@ -616,12 +620,12 @@ def dist_mat_km(catalog):
 
 
 def space_cluster(catalog, d_thresh, show=True):
-    """
+    r"""
     Function to cluster a catalog by distance only - will compute the\
     matrix of physical distances between events and utilize the\
     scipy.clusering.hierarchy module to perform the clustering.
 
-    :type catalog: obspy.Catalog
+    :type catalog: :class: obspy.Catalog
     :param catalog: Catalog of events to clustered
     :type d_thresh: float
     :param d_thresh: Maximum inter-event distance threshold

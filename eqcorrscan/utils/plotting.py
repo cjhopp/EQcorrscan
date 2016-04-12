@@ -523,8 +523,32 @@ def interev_mag(times, mags):
     plt.show()
 
 
+def plot_sta_residuals(catalog, histvar=False, kdevar=True):
+    r"""
+    Function to visualize travel time residuals by station for a catalog.\
+    Plots a histogram, kernel density estimate or both.
+
+    :type catalog: class: 'obspy.Catalog'
+    :param catalog: Catalog with picks we want to inspect
+    :type histvar: bool
+    :param histvar: Plot the histogram or not. Defaults to False.
+    :type kdevar: bool
+    :param kdevar: Plot the kde or not. Defaults to True.
+    """
+    import seaborn as sns
+    from eqcorrscan.utils.cat_util import sta_res_dict
+
+    sta_dict = sta_res_dict(catalog)
+    #Create dictionary of residuals for each station
+    for sta, resids in sta_dict.iteritems():
+        ax = sns.distplot(resids['res'], hist=histvar, kde=kdevar, label=sta)
+    plt.show()
+    return
+
+
 def obspy_3d_plot(inventory, catalog):
-    r"""Wrapper on threeD_seismplot() to plot obspy.Inventory and
+    r"""
+    Wrapper on threeD_seismplot() to plot obspy.Inventory and
     obspy.Catalog classes in three dimensions.
 
     :type inventory: obspy.Inventory
