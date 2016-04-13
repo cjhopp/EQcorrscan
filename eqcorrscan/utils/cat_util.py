@@ -36,7 +36,8 @@ def sta_res_dict(catalog):
     """
     sta_dict = {}
     for event in catalog:
-        for arrival in event.preferred_origin().arrivals:
+        origin = event.preferred_origin() or event.origins[0]
+        for arrival in origin.arrivals:
             assoc_pick = arrival.pick_id.get_referred_object()
             pick_sta = assoc_pick.waveform_id.station_code
             if pick_sta not in sta_dict:
@@ -52,8 +53,9 @@ def extract_all_residuals(catalog):
     r"""
     Function to create a list of all travel time residuals in a catalog.
     """
-    arr_time_resds = [abs(x.time_residual) for event in catalog
-                      for x in event.preferred_origin().arrivals]
+    for event in catalog:
+        origin = event.preferred_origin() or event.origins[0]
+        arr_time_resds = [abs(x.time_residual) for x in origin.arrivals]
     return arr_time_resds
 
 
@@ -96,7 +98,8 @@ def jeffreys_weighting(catalog, plotvar=True):
     print('m equals: %s' % str(m))
     # Loop over all arrivals and assign weights
     for event in cat2:
-        for arr in event.preferred_origin().arrivals:
+        origin = event.preferred_origin() or event.origins[0]
+        for arr in origin.arrivals:
             wt = 1 / (1 + m * np.exp(arr.time_residual ** 2 / res_std ** 2))
             print('weight equals: %s' % str(wt))
             # XXX Putting this here because I don't know where else ATM
@@ -118,20 +121,20 @@ def filter_picks(catalog, sigma):
 
     :returns: :class: obspy.Catalog
     """
-    # XXX TODO Still not correct. Arrivals not being removed correctly.
-    residuals = extract_all_residuals(catalog)
+    new_cat = catalog.copy()
+    residuals = extract_all_residuals(new_cat)
     mean_res = np.mean(residuals)
     res_std = np.std(residuals)
-    for event in catalog:
-        for arrival in event.preferred_origin().arrivals:
+    for event in new_cat:
+        origin = event.preferred_origin() or event.origins[0]
+        for arrival in origin.arrivals:
             if arrival.time_residual < mean_res - (res_std * sigma) or\
                arrival.time_residual > mean_res + (res_std * sigma):
                 pick = arrival.pick_id.get_referred_object()
                 event.picks.remove(pick)
-                event.preferred_origin().arrivals.remove(arrival)
             else:
                 continue
-    return catalog
+    return new_cat
 
 
 def filter_events(catalog, method='avg_residual', plot=False):
@@ -163,7 +166,7 @@ def filter_events(catalog, method='avg_residual', plot=False):
     # Calculate average arrival time residual for all preferred origins
     avg_arr_res = []
     for event in catalog:
-        pref_o = event.preferred_origin()
+        pref_o = event.preferred_origin() or event.origins[0]
         # Calculate average arrival time residual for origin
         avg_arr_res.append(sum([abs(x.time_residual) for
                            i, x in enumerate(pref_o.arrivals)]) / i)
@@ -184,7 +187,7 @@ def filter_events(catalog, method='avg_residual', plot=False):
         mean_avg = np.mean(avg_arr_res)
         std_avg = np.std(avg_arr_res)
         for event in catalog:
-            pref_o = event.preferred_origin()
+            pref_o = event.preferred_origin() or event.origins[0]
             avg_arr_res = sum([x.time_residual for
                                x in pref_o.arrivals]) / len(pref_o.arrivals)
             if avg_arr_res < mean_avg + std_avg and\
@@ -196,7 +199,7 @@ def filter_events(catalog, method='avg_residual', plot=False):
         mean_res = np.mean(arr_time_resds)
         std_res = np.std(arr_time_resds)
         for event in catalog:
-            pref_o = event.preferred_origin()
+            pref_o = event.preferred_origin() or event.origins[0]
             bad_arrivals = [x for x in pref_o.arrivals
                             if x.time_residual < mean_res - std_res or
                             x.time_residual > mean_res + std_res]
@@ -210,7 +213,7 @@ def filter_events(catalog, method='avg_residual', plot=False):
 
 def uncommon_picks(event1, event2):
     r"""
-    Helper to find picks in event1 for which there is no match in event2
+    Helper to find picks in event1 for which there are no matches in event2
 
     There must be a more elegant way to do this!!
 

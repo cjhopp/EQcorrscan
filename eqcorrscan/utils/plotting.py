@@ -557,9 +557,10 @@ def obspy_3d_plot(inventory, catalog):
     :param catalog: Obspy catalog class containing event metadata
     """
     from eqcorrscan.utils.plotting import threeD_seismplot
-    nodes = [(ev.preferred_origin().latitude,
-              ev.preferred_origin().longitude,
-              ev.preferred_origin().depth / 1000) for ev in catalog]
+    nodes = [(ev.preferred_origin().latitude or ev.origins[0].latitude,
+              ev.preferred_origin().longitude or ev.origins[0].longitude,
+              ev.preferred_origin().depth / 1000 or ev.origins[0].depth / 1000)
+             for ev in catalog]
     # Will plot borehole instruments at elevation - depth if provided
     all_stas = []
     for net in inventory:

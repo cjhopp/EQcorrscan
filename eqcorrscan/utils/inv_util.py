@@ -29,7 +29,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def inv2nlloc(inventory, out_file='.'):
+def inv2nlloc(inventory, out_file='tmp.txt'):
     r"""
     Function to write an obspy.Inventory class to the correct format for\
     NLLoc Grid2Time.
